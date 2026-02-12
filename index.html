@@ -6,238 +6,362 @@
 <title>המספרים המחוברים</title>
 
 <style>
-body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; }
-.wrap { max-width: 750px; margin: 0 auto; padding: 20px; }
-.card { background:white; border-radius: 14px; padding: 20px; box-shadow: 0 4px 18px rgba(0,0,0,.08); }
-h1 { margin: 0 0 10px; }
+  body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px; }
+  .card { background:white; border-radius: 14px; padding: 20px; box-shadow: 0 4px 18px rgba(0,0,0,.08); }
 
-.instructions {
-  background:#eef4ff;
-  padding:15px;
-  border-radius:12px;
-  margin-bottom:20px;
-  font-size:15px;
-  line-height:1.6;
-}
+  h1 { margin: 0 0 10px; }
 
-.timer {
-  background:#0b1220;
-  color:white;
-  padding:10px;
-  border-radius:12px;
-  text-align:center;
-  font-weight:bold;
-  margin-bottom:15px;
-}
+  .instructions{
+    background:#eef4ff;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:14px;
+    font-size:15px;
+    line-height:1.6;
+  }
 
-.timer.warn { background:#8b0000; }
+  .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .timer{
+    background:#0b1220; color:white; padding:10px 12px; border-radius:12px;
+    text-align:center; font-weight:bold; min-width:140px; direction:ltr;
+  }
+  .timer.warn{ background:#8b0000; }
 
-.groups { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-bottom:15px; }
-.g { background:#fafafa; border:1px solid #eee; border-radius:12px; padding:12px; min-width:220px; text-align:center; }
-.nums { font-size:22px; direction:ltr; }
+  .groups { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin: 12px 0 14px; }
+  .g { background:#fafafa; border:1px solid #eee; border-radius:12px; padding:12px; min-width:220px; text-align:center; }
+  .nums { font-size:22px; direction:ltr; }
 
-.row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px; }
+  .row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px; }
+  input { font-size:18px; padding:10px 12px; width:190px; text-align:center; border-radius:10px; border:1px solid #ccc; }
+  button { padding:10px 14px; font-size:15px; border-radius:10px; border:none; cursor:pointer; }
+  .primary { background:#1a73e8; color:white; }
+  .secondary { background:#eee; }
+  .warnBtn { background:#ffefc7; }
 
-input { font-size:18px; padding:8px; width:160px; text-align:center; border-radius:10px; border:1px solid #ccc; }
-button { padding:8px 14px; font-size:15px; border-radius:10px; border:none; cursor:pointer; }
-.primary { background:#1a73e8; color:white; }
-.secondary { background:#eee; }
+  .msg { margin-top:15px; font-weight:bold; font-size:18px; }
+  .ok { color:green; }
+  .bad { color:red; }
 
-.msg { margin-top:15px; font-weight:bold; }
-.ok { color:green; }
-.bad { color:red; }
+  .proof {
+    margin-top:10px;
+    background:#0b1220;
+    color:#e7eefc;
+    padding:12px;
+    border-radius:12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    direction:ltr;
+    white-space: pre-wrap;
+    text-align:left;
+  }
 
-.proof {
-  margin-top:10px;
-  background:#0b1220;
-  color:#e7eefc;
-  padding:12px;
-  border-radius:12px;
-  font-family:monospace;
-  direction:ltr;
-  white-space:pre-wrap;
-}
+  details { margin-top: 10px; }
+  .small { font-size: 14px; color:#444; margin-top: 8px; line-height:1.4; }
 </style>
 </head>
 
 <body>
 <div class="wrap">
-<div class="card">
+  <div class="card">
 
-<h1>🎮 המספרים המחוברים</h1>
+    <div class="topbar">
+      <h1>🎮 המספרים המחוברים</h1>
+      <div class="timer" id="timerBox">Time: 30s</div>
+    </div>
 
-<div class="instructions">
-<b>מה עושים?</b><br>
-יש 2 קבוצות של 3 ספרות.<br>
-המטרה: למצוא <b>מספר שלם חיובי</b> שאפשר להגיע אליו בשתי הקבוצות,
-בעזרת פעולות <b>+ - × ÷</b> בלבד,
-ותוך שימוש <b>בכל הספרות פעם אחת בלבד</b>.<br><br>
+    <div class="instructions">
+      <b>מה עושים?</b><br>
+      יש 2 קבוצות של 3 ספרות.<br>
+      המטרה: למצוא <b>מספר שלם חיובי</b> שאפשר להגיע אליו בשתי הקבוצות,
+      בעזרת פעולות <b>+ - × ÷</b> בלבד,
+      ותוך שימוש <b>בכל הספרות פעם אחת בלבד</b>.<br><br>
 
-<b>דוגמה:</b><br>
-קבוצה 1: [6, 3, 2] → (6 − 3) ÷ 2 = 1<br>
-קבוצה 2: [9, 4, 5] → (9 − 5) ÷ 4 = 1<br>
-לכן התוצאה המשותפת היא <b>1</b>.
-</div>
+      <b>דוגמה:</b><br>
+      קבוצה 1: [6, 3, 2] → (6 − 3) ÷ 2 = 1<br>
+      קבוצה 2: [9, 4, 5] → (9 − 5) ÷ 4 = 1<br>
+      לכן התוצאה המשותפת היא <b>1</b>.
+    </div>
 
-<div class="timer" id="timerBox">Time: 30s</div>
+    <div class="groups">
+      <div class="g">
+        <div><b>קבוצה 1</b></div>
+        <div class="nums" id="g1"></div>
+      </div>
+      <div class="g">
+        <div><b>קבוצה 2</b></div>
+        <div class="nums" id="g2"></div>
+      </div>
+    </div>
 
-<div class="groups">
-  <div class="g">
-    <div>קבוצה 1</div>
-    <div class="nums" id="g1"></div>
+    <div class="row">
+      <input id="target" inputmode="numeric" placeholder="מספר שלם חיובי בלבד">
+      <button class="primary" onclick="checkTarget()">בדוק</button>
+      <button class="secondary" onclick="newPuzzle()">תרגיל חדש</button>
+      <button class="warnBtn" onclick="toggleCommon()">הצג תוצאות משותפות</button>
+    </div>
+
+    <div class="msg" id="msg"></div>
+    <div class="proof" id="proof" style="display:none;"></div>
+
+    <details id="commonBox" style="display:none;">
+      <summary>תוצאות משותפות אפשריות (שלמות וחיוביות)</summary>
+      <div class="small" id="commonList"></div>
+    </details>
+
+    <div class="small">
+      חוקים: משתמשים <b>בכל הספרות</b> פעם אחת בלבד, ורק בפעולות <b>+ - * /</b> (מותר סוגריים).<br/>
+      תוצאה מותרת: <b>מספר שלם חיובי בלבד</b>.
+    </div>
+
   </div>
-  <div class="g">
-    <div>קבוצה 2</div>
-    <div class="nums" id="g2"></div>
-  </div>
-</div>
-
-<div class="row">
-  <input id="target" placeholder="מספר שלם חיובי בלבד">
-  <button class="primary" onclick="checkTarget()">בדוק</button>
-  <button class="secondary" onclick="newPuzzle()">תרגיל חדש</button>
-</div>
-
-<div class="msg" id="msg"></div>
-<div class="proof" id="proof" style="display:none;"></div>
-
-</div>
 </div>
 
 <script>
-const ROUND_SECONDS = 30;
-let timeLeft = ROUND_SECONDS;
-let timerId = null;
-let roundActive = true;
+  // =======================
+  //  צלילים מצחיקים 🎵
+  // =======================
+  function playFunnySound(type) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
 
-function startTimer(){
-  stopTimer();
-  timeLeft = ROUND_SECONDS;
-  roundActive = true;
-  updateTimer();
-  timerId = setInterval(()=>{
-    timeLeft--;
-    updateTimer();
-    if(timeLeft<=0){
-      stopTimer();
-      roundActive=false;
-      document.getElementById("msg").innerText="⏰ נגמר הזמן!";
-      document.getElementById("msg").className="msg bad";
+    const ctx = new AudioCtx();
+
+    function tone(freq, duration, wave = "sine", gainVal = 0.22) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = wave;
+      osc.frequency.value = freq;
+      gain.gain.value = gainVal;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      setTimeout(() => osc.stop(), duration);
     }
-  },1000);
-}
 
-function stopTimer(){
-  if(timerId){ clearInterval(timerId); timerId=null; }
-}
+    if (type === "success") {
+      // BOING קופצני
+      tone(420, 90, "square");
+      setTimeout(() => tone(720, 130, "square"), 90);
+      setTimeout(() => tone(980, 180, "square"), 220);
+    } else if (type === "fail") {
+      // WAH-WAH מצחיק
+      tone(520, 160, "sawtooth");
+      setTimeout(() => tone(320, 240, "sawtooth"), 160);
+    } else if (type === "timeout") {
+      // דרמטי יורד
+      tone(650, 180, "triangle");
+      setTimeout(() => tone(430, 200, "triangle"), 180);
+      setTimeout(() => tone(220, 260, "triangle"), 380);
+    }
 
-function updateTimer(){
-  const box=document.getElementById("timerBox");
-  box.innerText="Time: "+timeLeft+"s";
-  if(timeLeft<=5) box.classList.add("warn");
-  else box.classList.remove("warn");
-}
+    // סגירת ה-context אחרי רגע
+    setTimeout(() => ctx.close(), 900);
+  }
 
-function gcd(a,b){ return b?gcd(b,a%b):a; }
+  // =======================
+  //  טיימר ⏱️
+  // =======================
+  const ROUND_SECONDS = 30;
+  let timeLeft = ROUND_SECONDS;
+  let timerId = null;
+  let roundActive = true;
 
-function frac(n,d){
-  if(d===0) return null;
-  if(d<0){n=-n; d=-d;}
-  let g=Math.abs(gcd(n,d));
-  return {n:n/g,d:d/g};
-}
+  function startTimer(){
+    stopTimer();
+    timeLeft = ROUND_SECONDS;
+    roundActive = true;
+    updateTimer();
+    timerId = setInterval(()=>{
+      timeLeft--;
+      updateTimer();
+      if(timeLeft <= 0){
+        timeLeft = 0;
+        updateTimer();
+        stopTimer();
+        roundActive = false;
+        setMessage("⏰ נגמר הזמן! לחץ 'תרגיל חדש' כדי לנסות שוב.", false);
+        document.getElementById("proof").style.display = "none";
+        playFunnySound("timeout");
+      }
+    }, 1000);
+  }
 
-function add(a,b){return frac(a.n*b.d+b.n*a.d,a.d*b.d);}
-function sub(a,b){return frac(a.n*b.d-b.n*a.d,a.d*b.d);}
-function mul(a,b){return frac(a.n*b.n,a.d*b.d);}
-function div(a,b){if(b.n===0)return null; return frac(a.n*b.d,a.d*b.n);}
+  function stopTimer(){
+    if(timerId){
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
 
-function perms(a){
-  return [
-    [a[0],a[1],a[2]],[a[0],a[2],a[1]],
-    [a[1],a[0],a[2]],[a[1],a[2],a[0]],
-    [a[2],a[0],a[1]],[a[2],a[1],a[0]]
+  function updateTimer(){
+    const box = document.getElementById("timerBox");
+    box.textContent = `Time: ${timeLeft}s`;
+    box.classList.toggle("warn", timeLeft <= 5 && roundActive);
+  }
+
+  // =======================
+  //  חישוב מדויק בשברים (ללא Floating Point)
+  // =======================
+  function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
+  function frac(n,d){
+    if(d === 0) return null;
+    if(d < 0){ n = -n; d = -d; }
+    const g = gcd(n,d);
+    return { n: n/g, d: d/g };
+  }
+  function add(a,b){ return frac(a.n*b.d + b.n*a.d, a.d*b.d); }
+  function sub(a,b){ return frac(a.n*b.d - b.n*a.d, a.d*b.d); }
+  function mul(a,b){ return frac(a.n*b.n, a.d*b.d); }
+  function div(a,b){ if(b.n === 0) return null; return frac(a.n*b.d, a.d*b.n); }
+  function keyOf(f){ return `${f.n}/${f.d}`; }
+
+  // רק מספר שלם חיובי
+  function parseTarget(){
+    const s = (document.getElementById("target").value || "").trim();
+    const v = Number(s);
+    if(!Number.isFinite(v) || !Number.isInteger(v) || v <= 0) return null;
+    return v;
+  }
+
+  function perms3(a){
+    return [
+      [a[0],a[1],a[2]],[a[0],a[2],a[1]],
+      [a[1],a[0],a[2]],[a[1],a[2],a[0]],
+      [a[2],a[0],a[1]],[a[2],a[1],a[0]]
+    ];
+  }
+
+  const OPS = [
+    {sym:"+", fn:add},
+    {sym:"-", fn:sub},
+    {sym:"*", fn:mul},
+    {sym:"/", fn:div}
   ];
-}
 
-const OPS=[
- {sym:"+",fn:add},
- {sym:"-",fn:sub},
- {sym:"*",fn:mul},
- {sym:"/",fn:div}
-];
+  // Map: intResult -> expression
+  function getPositiveIntegerResultsWithProof(nums){
+    const out = new Map();
 
-function getResults(nums){
-  let map=new Map();
-  for(let [x,y,z] of perms(nums)){
-    let fx=frac(x,1), fy=frac(y,1), fz=frac(z,1);
-    for(let o1 of OPS){
-      for(let o2 of OPS){
-        let r1=o1.fn(fx,fy);
-        if(r1){
-          let r=o2.fn(r1,fz);
-          if(r && r.d===1 && r.n>0){
-            let key=r.n;
-            if(!map.has(key)){
-              map.set(key,`(${x} ${o1.sym} ${y}) ${o2.sym} ${z}`);
+    for(const [x,y,z] of perms3(nums)){
+      const fx = frac(x,1), fy = frac(y,1), fz = frac(z,1);
+
+      for(const o1 of OPS){
+        for(const o2 of OPS){
+
+          // (x o1 y) o2 z
+          const r1 = o1.fn(fx, fy);
+          if(r1){
+            const r = o2.fn(r1, fz);
+            if(r && r.d === 1 && r.n > 0 && !out.has(r.n)){
+              out.set(r.n, `(${x} ${o1.sym} ${y}) ${o2.sym} ${z}`);
+            }
+          }
+
+          // x o1 (y o2 z)
+          const r2 = o2.fn(fy, fz);
+          if(r2){
+            const r = o1.fn(fx, r2);
+            if(r && r.d === 1 && r.n > 0 && !out.has(r.n)){
+              out.set(r.n, `${x} ${o1.sym} (${y} ${o2.sym} ${z})`);
             }
           }
         }
       }
     }
-  }
-  return map;
-}
-
-function randDigit(){ return Math.floor(Math.random()*9)+1; }
-
-let group1, group2, map1, map2;
-
-function newPuzzle(){
-  let found=false;
-  while(!found){
-    group1=[randDigit(),randDigit(),randDigit()];
-    group2=[randDigit(),randDigit(),randDigit()];
-    map1=getResults(group1);
-    map2=getResults(group2);
-    let common=[...map1.keys()].filter(k=>map2.has(k));
-    if(common.length>0) found=true;
+    return out;
   }
 
-  document.getElementById("g1").innerText=group1.join(", ");
-  document.getElementById("g2").innerText=group2.join(", ");
-  document.getElementById("msg").innerText="";
-  document.getElementById("proof").style.display="none";
-  document.getElementById("target").value="";
-  startTimer();
-}
+  function randDigit(){ return Math.floor(Math.random()*9)+1; }
 
-function checkTarget(){
-  if(!roundActive) return;
+  let group1 = [0,0,0];
+  let group2 = [0,0,0];
+  let map1 = new Map();
+  let map2 = new Map();
 
-  let val=parseInt(document.getElementById("target").value);
-  if(!Number.isInteger(val) || val<=0){
-    document.getElementById("msg").innerText="הכנס מספר שלם חיובי בלבד";
-    document.getElementById("msg").className="msg bad";
-    return;
+  function setMessage(text, ok){
+    const el = document.getElementById("msg");
+    el.textContent = text;
+    el.className = "msg " + (ok ? "ok" : "bad");
   }
 
-  if(map1.has(val) && map2.has(val)){
-    document.getElementById("msg").innerText="✅ נכון!";
-    document.getElementById("msg").className="msg ok";
-    document.getElementById("proof").style.display="block";
-    document.getElementById("proof").innerText=
-      `Group 1: ${map1.get(val)} = ${val}\n`+
-      `Group 2: ${map2.get(val)} = ${val}`;
-    roundActive=false;
-    stopTimer();
-  } else {
-    document.getElementById("msg").innerText="❌ לא נכון";
-    document.getElementById("msg").className="msg bad";
-  }
-}
+  function newPuzzle(){
+    let tries = 0;
+    while(true){
+      group1 = [randDigit(), randDigit(), randDigit()];
+      group2 = [randDigit(), randDigit(), randDigit()];
+      map1 = getPositiveIntegerResultsWithProof(group1);
+      map2 = getPositiveIntegerResultsWithProof(group2);
 
-newPuzzle();
+      const common = [...map1.keys()].filter(k => map2.has(k));
+      if(common.length > 0) {
+        // update debug list
+        common.sort((a,b)=>a-b);
+        document.getElementById("commonList").textContent = common.join(", ");
+        break;
+      }
+
+      tries++;
+      if(tries > 800) break; // נדיר, אבל שלא ייתקע
+    }
+
+    document.getElementById("g1").textContent = `[${group1.join(", ")}]`;
+    document.getElementById("g2").textContent = `[${group2.join(", ")}]`;
+
+    document.getElementById("target").value = "";
+    document.getElementById("proof").style.display = "none";
+    document.getElementById("proof").textContent = "";
+    document.getElementById("msg").textContent = "";
+
+    startTimer();
+    document.getElementById("target").focus();
+  }
+
+  function checkTarget(){
+    if(!roundActive){
+      setMessage("הסיבוב נגמר. לחץ 'תרגיל חדש' כדי להתחיל שוב.", false);
+      return;
+    }
+
+    const t = parseTarget();
+    if(t === null){
+      setMessage("הכנס מספר שלם חיובי בלבד (למשל 5).", false);
+      playFunnySound("fail");
+      document.getElementById("proof").style.display = "none";
+      return;
+    }
+
+    if(map1.has(t) && map2.has(t)){
+      setMessage("✅ נכון! מצאת תוצאה משותפת.", true);
+      playFunnySound("success");
+
+      const proof = document.getElementById("proof");
+      proof.style.display = "block";
+      proof.textContent =
+        `Group 1: ${map1.get(t)} = ${t}\n` +
+        `Group 2: ${map2.get(t)} = ${t}`;
+
+      roundActive = false;
+      stopTimer();
+      updateTimer();
+    } else {
+      setMessage("❌ לא נכון. התוצאה הזו לא אפשרית בשתי הקבוצות.", false);
+      playFunnySound("fail");
+      document.getElementById("proof").style.display = "none";
+    }
+  }
+
+  function toggleCommon(){
+    const box = document.getElementById("commonBox");
+    box.style.display = (box.style.display === "none") ? "block" : "none";
+  }
+
+  // Enter = בדוק
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkTarget();
+  });
+
+  // start
+  newPuzzle();
 </script>
 </body>
 </html>
