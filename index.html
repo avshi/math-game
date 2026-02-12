@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>המספרים המחוברים</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 20px; }
+    .card { background:white; border-radius: 14px; padding: 18px; box-shadow: 0 4px 18px rgba(0,0,0,.08); }
+    h1 { margin: 10px 0 6px; font-size: 26px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    .timer {
+      background:#0b1220; color:#e7eefc; border-radius: 12px;
+      padding: 10px 12px; font-weight:700; min-width: 150px;
+      text-align:center; direction:ltr;
+    }
+    .timer.warn { background:#7a1b1b; }
+    .groups { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin: 14px 0 14px; }
+    .g { background:#fafafa; border:1px solid #eee; border-radius:12px; padding:12px 14px; min-width: 240px; }
+    .g .title { font-weight:700; margin-bottom:6px; }
+    .nums { font-size: 22px; letter-spacing: 1px; direction:ltr; text-align:center; }
+    .row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 10px; }
+    input {
+      font-size: 18px; padding: 10px 12px; width: 180px; text-align:center;
+      border-radius: 12px; border: 1px solid #ddd;
+    }
+    button { font-size: 16px; padding: 10px 14px; border-radius: 12px; border: none; cursor:pointer; }
+    button.primary { background:#1a73e8; color:white; }
+    button.secondary { background:#eee; }
+    button.warn { background:#ffefc7; }
+    .msg { margin-top: 14px; font-size: 18px; font-weight: 700; }
+    .ok { color:#0b7a28; }
+    .bad { color:#b00020; }
+    .proof {
+      margin-top: 10px; background:#0b1220; color:#e7eefc; padding:12px 14px;
+      border-radius: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      text-align:left; direction:ltr; white-space: pre-wrap;
+    }
+    details { margin-top: 10px; }
+    .small { font-size: 14px; color:#444; margin-top: 8px; line-height:1.4; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <div class="topbar">
+        <h1>🎮 המספרים המחוברים</h1>
+        <div class="timer" id="timerBox">Time: 30s</div>
+      </div>
+
+      <div class="groups">
+        <div class="g">
+          <div class="title">קבוצה 1</div>
+          <div class="nums" id="g1"></div>
+        </div>
+        <div class="g">
+          <div class="title">קבוצה 2</div>
+          <div class="nums" id="g2"></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <input id="target" inputmode="numeric" placeholder="תוצאה (שלם חיובי בלבד)" />
+        <button class="primary" onclick="checkTarget()">בדוק</button>
+        <button class="secondary" onclick="newPuzzle()">תרגיל חדש</button>
+        <button class="warn" onclick="toggleCommon()">הצג תוצאות משותפות</button>
+      </div>
+
+      <div class="msg" id="msg"></div>
+      <div class="proof" id="proof" style="display:none;"></div>
+
+      <details id="commonBox" style="display:none;">
+        <summary>תוצאות משותפות שלמות וחיוביות (Debug)</summary>
+        <div class="small" id="commonList"></div>
+      </details>
+
+      <div class="small">
+        חוקים:
+        משתמשים <b>בכל הספרות</b> פעם אחת בלבד, ורק בפעולות <b>+ - * /</b> (מותר סוגריים).<br/>
+        תוצאה מותרת: <b>מספר שלם חיובי בלבד</b> (בלי 0 ובלי שלילי).
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ====== הגדרות טיימר ======
+  const ROUND_SECONDS = 30; // אפשר לשנות ל-20/45/60 וכו'
+  let timeLeft = ROUND_SECONDS;
+  let timerId = null;
+  let roundActive = true; // כשנגמר הזמן / הצלחה -> false
+
+  function startTimer() {
+    stopTimer();
+    timeLeft = ROUND_SECONDS;
+    roundActive = true;
+    renderTimer();
+
+    timerId = setInterval(() => {
+      timeLeft--;
+      renderTimer();
+
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        renderTimer();
+        stopTimer();
+        roundActive = false;
+        setMessage("⏰ נגמר הזמן! לחץ 'תרגיל חדש' כדי לנסות שוב.", false);
+        document.getElementById("proof").style.display = "none";
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  function renderTimer() {
+    const box = document.getElementById("timerBox");
+    box.textContent = `Time: ${timeLeft}s`;
+    box.classList.toggle("warn", timeLeft <= 5 && roundActive);
+  }
+
+  // --- שברים מדויקים (כדי לא להיתקע על Floating Point) ---
+  function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
+  function normFrac(n,d){
+    if (d === 0) return null;
+    if (d < 0) { n = -n; d = -d; }
+    const g = gcd(n,d);
+    return { n: n/g, d: d/g };
+  }
+  function add(a,b){ return normFrac(a.n*b.d + b.n*a.d, a.d*b.d); }
+  function sub(a,b){ return normFrac(a.n*b.d - b.n*a.d, a.d*b.d); }
+  function mul(a,b){ return normFrac(a.n*b.n, a.d*b.d); }
+  function div(a,b){ if (b.n===0) return null; return normFrac(a.n*b.d, a.d*b.n); }
+  function fracToKey(f){ return `${f.n}/${f.d}`; }
+  function fracToDisplay(f){ return f.d===1 ? `${f.n}` : `${f.n}/${f.d}`; }
+
+  // ✅ רק מספר שלם חיובי (לא 0, לא שלילי, לא שברים)
+  function parseTarget(s){
+    s = (s||"").trim();
+    if (!s) return null;
+    const v = Number(s);
+    if (!Number.isFinite(v) || !Number.isInteger(v) || v <= 0) return null;
+    return normFrac(v, 1);
+  }
+
+  function perms3(arr){
+    const [a,b,c]=arr;
+    return [
+      [a,b,c],[a,c,b],
+      [b,a,c],[b,c,a],
+      [c,a,b],[c,b,a]
+    ];
+  }
+
+  const OPS = [
+    { sym:"+", fn:add },
+    { sym:"-", fn:sub },
+    { sym:"*", fn:mul },
+    { sym:"/", fn:div }
+  ];
+
+  // Map: resultKey -> expressionString (הוכחה ראשונה שמצא)
+  function allResultsWithProof(nums){
+    const out = new Map();
+    const p = perms3(nums);
+
+    for (const [x,y,z] of p){
+      const fx = normFrac(x,1), fy = normFrac(y,1), fz = normFrac(z,1);
+
+      for (const op1 of OPS){
+        for (const op2 of OPS){
+
+          // (x op1 y) op2 z
+          const r1 = op1.fn(fx, fy);
+          if (r1){
+            const r = op2.fn(r1, fz);
+            if (r){
+              const key = fracToKey(r);
+              if (!out.has(key)){
+                out.set(key, `(${x} ${op1.sym} ${y}) ${op2.sym} ${z}`);
+              }
+            }
+          }
+
+          // x op1 (y op2 z)
+          const r2 = op2.fn(fy, fz);
+          if (r2){
+            const r = op1.fn(fx, r2);
+            if (r){
+              const key = fracToKey(r);
+              if (!out.has(key)){
+                out.set(key, `${x} ${op1.sym} (${y} ${op2.sym} ${z})`);
+              }
+            }
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  function randDigit(){ return Math.floor(Math.random()*9)+1; }
+
+  let group1 = [0,0,0];
+  let group2 = [0,0,0];
+  let map1 = new Map();
+  let map2 = new Map();
+  let commonKeys = [];
+
+  function refreshUI(){
+    document.getElementById("g1").textContent = `[${group1.join(", ")}]`;
+    document.getElementById("g2").textContent = `[${group2.join(", ")}]`;
+  }
+
+  function compute(){
+    map1 = allResultsWithProof(group1);
+    map2 = allResultsWithProof(group2);
+
+    const s1 = new Set(map1.keys());
+    commonKeys = Array.from(map2.keys()).filter(k => s1.has(k));
+
+    // ✅ רק תוצאות שלמות וחיוביות
+    const commonPosInts = commonKeys
+      .map(k => {
+        const [n,d] = k.split("/").map(Number);
+        return { n, d };
+      })
+      .filter(x => x.d === 1 && x.n > 0)
+      .map(x => x.n)
+      .sort((a,b)=>a-b);
+
+    document.getElementById("commonList").textContent =
+      commonPosInts.length ? commonPosInts.join(", ") : "אין תוצאות משותפות שלמות וחיוביות.";
+
+    // נשמור commonKeys רק לתוצאות שלמות וחיוביות כדי שתרגיל חדש יהיה פתיר לפי החוקים
+    commonKeys = commonKeys.filter(k => {
+      const [n,d] = k.split("/").map(Number);
+      return d === 1 && n > 0;
+    });
+  }
+
+  function setMessage(text, ok){
+    const el = document.getElementById("msg");
+    el.textContent = text;
+    el.className = "msg " + (ok ? "ok" : "bad");
+  }
+
+  function newPuzzle(){
+    // ✅ נוודא שיש לפחות תוצאה משותפת שלמה וחיובית אחת
+    let tries = 0;
+    do {
+      group1 = [randDigit(), randDigit(), randDigit()];
+      group2 = [randDigit(), randDigit(), randDigit()];
+      compute();
+      tries++;
+    } while (commonKeys.length === 0 && tries < 400);
+
+    refreshUI();
+
+    document.getElementById("target").value = "";
+    document.getElementById("msg").textContent = "";
+    document.getElementById("proof").style.display = "none";
+    document.getElementById("proof").textContent = "";
+
+    // טיימר מחדש
+    startTimer();
+    document.getElementById("target").focus();
+  }
+
+  function checkTarget(){
+    if (!roundActive) {
+      setMessage("הסיבוב נגמר. לחץ 'תרגיל חדש' כדי להתחיל שוב.", false);
+      return;
+    }
+
+    const t = parseTarget(document.getElementById("target").value);
+    if (!t){
+      setMessage("תכניס מספר שלם חיובי בלבד (למשל 5).", false);
+      document.getElementById("proof").style.display = "none";
+      return;
+    }
+
+    const key = fracToKey(t);
+    const has1 = map1.has(key);
+    const has2 = map2.has(key);
+
+    // בנוסף: חייב להיות חיובי ושלם (כבר נאכף) אבל נוודא גם מול המפות
+    if (has1 && has2){
+      setMessage("✅ נכון! אפשר להגיע לתוצאה הזו בשתי הקבוצות.", true);
+
+      const expr1 = map1.get(key);
+      const expr2 = map2.get(key);
+      const proof = document.getElementById("proof");
+      proof.style.display = "block";
+      proof.textContent =
+`Group 1: ${expr1} = ${fracToDisplay(t)}
+Group 2: ${expr2} = ${fracToDisplay(t)}`;
+
+      // עצור טיימר על הצלחה
+      roundActive = false;
+      stopTimer();
+      renderTimer();
+    } else {
+      setMessage("❌ לא. התוצאה הזו לא אפשרית בשתי הקבוצות לפי החוקים.", false);
+      document.getElementById("proof").style.display = "none";
+    }
+  }
+
+  function toggleCommon(){
+    const box = document.getElementById("commonBox");
+    box.style.display = (box.style.display === "none") ? "block" : "none";
+  }
+
+  // Enter = בדוק
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkTarget();
+  });
+
+  // start
+  newPuzzle();
+</script>
+</body>
+</html>
