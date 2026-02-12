@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>המספרים המחוברים</title>
+<title>Magic 3</title>
 
 <style>
   body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; }
@@ -11,6 +11,8 @@
   .card { background:white; border-radius: 14px; padding: 20px; box-shadow: 0 4px 18px rgba(0,0,0,.08); }
 
   h1 { margin: 0 0 10px; }
+
+  .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
 
   .instructions{
     background:#eef4ff;
@@ -21,10 +23,10 @@
     line-height:1.6;
   }
 
-  .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  /* Timer now sits above groups */
   .timer{
     background:#0b1220; color:white; padding:10px 12px; border-radius:12px;
-    text-align:center; font-weight:bold; min-width:140px; direction:ltr;
+    text-align:center; font-weight:bold; width: 160px; margin: 0 auto 14px; direction:ltr;
   }
   .timer.warn{ background:#8b0000; }
 
@@ -55,8 +57,17 @@
     text-align:left;
   }
 
-  details { margin-top: 10px; }
-  .small { font-size: 14px; color:#444; margin-top: 8px; line-height:1.4; }
+  /* Fixed common results panel */
+  .panel {
+    display:none;
+    margin-top: 12px;
+    background:#fff;
+    border:1px solid #eee;
+    border-radius:12px;
+    padding:12px;
+  }
+  .panel h3 { margin: 0 0 8px; font-size: 16px; }
+  .small { font-size: 14px; color:#444; line-height:1.4; }
 </style>
 </head>
 
@@ -65,8 +76,7 @@
   <div class="card">
 
     <div class="topbar">
-      <h1>🎮 המספרים המחוברים</h1>
-      <div class="timer" id="timerBox">Time: 30s</div>
+      <h1>🎮 Magic 3</h1>
     </div>
 
     <div class="instructions">
@@ -81,6 +91,9 @@
       קבוצה 2: [9, 4, 5] → (9 − 5) ÷ 4 = 1<br>
       לכן התוצאה המשותפת היא <b>1</b>.
     </div>
+
+    <!-- Timer moved here (right above groups) -->
+    <div class="timer" id="timerBox">Time: 30s</div>
 
     <div class="groups">
       <div class="g">
@@ -97,19 +110,16 @@
       <input id="target" inputmode="numeric" placeholder="מספר שלם חיובי בלבד">
       <button class="primary" onclick="checkTarget()">בדוק</button>
       <button class="secondary" onclick="newPuzzle()">תרגיל חדש</button>
-      <button class="warnBtn" onclick="toggleCommon()">הצג תוצאות משותפות</button>
+      <button class="warnBtn" id="toggleBtn" onclick="toggleCommon()">הצג תוצאות משותפות</button>
     </div>
 
     <div class="msg" id="msg"></div>
     <div class="proof" id="proof" style="display:none;"></div>
 
-    <details id="commonBox" style="display:none;">
-      <summary>תוצאות משותפות אפשריות (שלמות וחיוביות, אחרי חסימת הזיכרון)</summary>
+    <!-- Fixed panel that actually opens/closes -->
+    <div class="panel" id="commonPanel">
+      <h3>תוצאות משותפות אפשריות (שלמות וחיוביות)</h3>
       <div class="small" id="commonList"></div>
-    </details>
-
-    <div class="small">
-      חוק נוסף: בכל סיבוב המשחק בוחר רנדומלית לחסום את <b>2 או 3</b> התוצאות האחרונות שנפתרו — כדי שלא יחזרו על עצמן.
     </div>
 
   </div>
@@ -117,7 +127,7 @@
 
 <script>
   // =======================
-  //  צלילים מצחיקים 🎵
+  //  Funny sounds 🎵
   // =======================
   function playFunnySound(type) {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -154,7 +164,7 @@
   }
 
   // =======================
-  //  טיימר ⏱️
+  //  Timer ⏱️
   // =======================
   const ROUND_SECONDS = 30;
   let timeLeft = ROUND_SECONDS;
@@ -195,7 +205,7 @@
   }
 
   // =======================
-  //  חישוב מדויק בשברים
+  //  Exact fraction math
   // =======================
   function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
   function frac(n,d){
@@ -209,7 +219,7 @@
   function mul(a,b){ return frac(a.n*b.n, a.d*b.d); }
   function div(a,b){ if(b.n === 0) return null; return frac(a.n*b.d, a.d*b.n); }
 
-  // רק מספר שלם חיובי
+  // Only positive integers
   function parseTarget(){
     const s = (document.getElementById("target").value || "").trim();
     const v = Number(s);
@@ -272,8 +282,8 @@
   let map1 = new Map();
   let map2 = new Map();
 
-  // זיכרון תוצאות אחרונות (עד 3)
-  let lastSolvedHistory = [];  // לדוגמה: [5,7,2] (האחרונה ראשונה)
+  // Remember last 3 solved targets (newest first)
+  let lastSolvedHistory = [];
 
   function setMessage(text, ok){
     const el = document.getElementById("msg");
@@ -281,8 +291,13 @@
     el.className = "msg " + (ok ? "ok" : "bad");
   }
 
+  function updateCommonPanel(list){
+    const el = document.getElementById("commonList");
+    el.textContent = list.length ? list.join(", ") : "אין תוצאות אפשריות (אחרי הסינון).";
+  }
+
   function newPuzzle(){
-    // בכל סיבוב: חוסמים רנדומלית 2 או 3 תוצאות אחרונות
+    // Randomly avoid 2 or 3 last solved targets
     const avoidCount = (Math.random() < 0.5) ? 2 : 3;
     const avoidSet = new Set(lastSolvedHistory.slice(0, avoidCount));
 
@@ -301,7 +316,6 @@
         continue;
       }
 
-      // מסירים תוצאות "אסורות" מהזיכרון
       const filtered = common.filter(x => !avoidSet.has(x));
       if(filtered.length === 0){
         tries++;
@@ -310,9 +324,7 @@
       }
 
       filtered.sort((a,b)=>a-b);
-      document.getElementById("commonList").textContent =
-        filtered.join(", ");
-
+      updateCommonPanel(filtered);
       break;
     }
 
@@ -352,7 +364,7 @@
         `Group 1: ${map1.get(t)} = ${t}\n` +
         `Group 2: ${map2.get(t)} = ${t}`;
 
-      // עדכון היסטוריה: שומרים עד 3 אחרונות
+      // Update history (keep 3)
       lastSolvedHistory.unshift(t);
       lastSolvedHistory = lastSolvedHistory.slice(0, 3);
 
@@ -366,12 +378,16 @@
     }
   }
 
+  // ✅ Fixed: button now toggles a real panel + changes button text
   function toggleCommon(){
-    const box = document.getElementById("commonBox");
-    box.style.display = (box.style.display === "none") ? "block" : "none";
+    const panel = document.getElementById("commonPanel");
+    const btn = document.getElementById("toggleBtn");
+    const isOpen = panel.style.display === "block";
+    panel.style.display = isOpen ? "none" : "block";
+    btn.textContent = isOpen ? "הצג תוצאות משותפות" : "הסתר תוצאות משותפות";
   }
 
-  // Enter = בדוק
+  // Enter = check
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") checkTarget();
   });
